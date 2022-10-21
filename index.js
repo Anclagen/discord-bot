@@ -1,6 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { Client, Events, GatewayIntentBits, Collection, Partials } = require("discord.js");
+const { Client, GatewayIntentBits, Collection, Partials } = require("discord.js");
 const { token } = require("./config.json");
 
 const client = new Client({
@@ -13,19 +13,6 @@ client.commands = new Collection();
 const commandsPath = path.join(__dirname, "commands");
 const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith(".js") || file.endsWith(".mjs"));
 
-client.on("messageCreate", (msg) => {
-  console.log(msg);
-  if (msg.author.bot) return false;
-
-  const triggerWords = ["I'm", "Im", "im"];
-
-  triggerWords.forEach((word) => {
-    if (msg.content.includes(word)) {
-      msg.reply("Hi, " + msg.content + ". I'm dad!");
-    }
-  });
-});
-
 for (const file of commandFiles) {
   const filePath = path.join(commandsPath, file);
   const command = require(filePath);
@@ -37,47 +24,17 @@ for (const file of commandFiles) {
   }
 }
 
-client.once(Events.ClientReady, () => {
-  console.log("Ready!");
-});
+const eventsPath = path.join(__dirname, "events");
+const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith(".js"));
 
-client.on(Events.InteractionCreate, async (interaction) => {
-  const command = interaction.client.commands.get(interaction.commandName);
-
-  if (!command) {
-    console.error(`No command matching ${interaction.commandName} was found.`);
-    return;
+for (const file of eventFiles) {
+  const filePath = path.join(eventsPath, file);
+  const event = require(filePath);
+  if (event.once) {
+    client.once(event.name, (...args) => event.execute(...args));
+  } else {
+    client.on(event.name, (...args) => event.execute(...args));
   }
-
-  try {
-    await command.execute(interaction);
-  } catch (error) {
-    console.error(error);
-    await interaction.reply({ content: "There was an error while executing this command!", ephemeral: true });
-  }
-});
+}
 
 client.login(token);
-
-// const fs = require("node:fs");
-// const path = require("node:path");
-// const { Client, Collection, Events, GatewayIntentBits } = require("discord.js");
-// const { token } = require("./config.json");
-
-// const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-
-// const eventsPath = path.join(__dirname, "events");
-// const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith(".js"));
-
-// for (const file of eventFiles) {
-//   const filePath = path.join(eventsPath, file);
-//   const event = require(filePath);
-//   if (event.once) {
-//     client.once(event.name, (...args) => event.execute(...args));
-//   } else {
-//     client.on(event.name, (...args) => event.execute(...args));
-//   }
-// }
-
-// // Log in to Discord with your client's token
-// client.login(token);
