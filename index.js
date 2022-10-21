@@ -1,13 +1,30 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { Client, Events, GatewayIntentBits, Collection } = require("discord.js");
+const { Client, Events, GatewayIntentBits, Collection, Partials } = require("discord.js");
 const { token } = require("./config.json");
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.DirectMessages, GatewayIntentBits.MessageContent],
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction],
+  autorun: true,
+});
 
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, "commands");
-const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith(".js"));
+const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith(".js") || file.endsWith(".mjs"));
+
+client.on("messageCreate", (msg) => {
+  console.log(msg);
+  if (msg.author.bot) return false;
+
+  const triggerWords = ["I'm", "Im", "im"];
+
+  triggerWords.forEach((word) => {
+    if (msg.content.includes(word)) {
+      msg.reply("Hi, " + msg.content + ". I'm dad!");
+    }
+  });
+});
 
 for (const file of commandFiles) {
   const filePath = path.join(commandsPath, file);
@@ -22,29 +39,6 @@ for (const file of commandFiles) {
 
 client.once(Events.ClientReady, () => {
   console.log("Ready!");
-});
-
-client.on("message", async (msg) => {
-  if (msg.content === "?fact") {
-    const response = await fetch("https://api.chucknorris.io/jokes/random");
-    const fact = await response.json();
-    let r = fact.value;
-    msg.reply(r);
-  }
-});
-
-client.on("message", (msg) => {
-  if (msg.content === "ping") {
-    msg.reply("Pong!");
-  }
-});
-
-client.on("message", function (message) {
-  if (message.content === "$loop") {
-    var interval = setInterval(function () {
-      message.channel.send("123");
-    }, 60 * 1000);
-  }
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {

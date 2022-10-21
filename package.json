@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "dadjokes-wrapper": "^0.1.4",
-    "discord.js": "^14.6.0"
+    "discord.js": "^14.6.0",
+    "node-fetch": "^3.2.10"
   }
 }
